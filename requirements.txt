@@ -1,5 +1,7 @@
 matplotlib
-pandas
-scikit-learn
-streamlit
+seaborn
 shap
+scikit-learn
+pandas
+numpy
+streamlit
