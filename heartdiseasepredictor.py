@@ -100,7 +100,9 @@ st.write(f"SHAP values shape: {len(shap_values)}")  # To check if it's a list or
 if isinstance(shap_values, list):
     shap_values = shap_values[1]  # For binary classification, use shap_values[1] for the positive class
 
-# Plot the SHAP summary plot for feature importance
+# Plot the SHAP 
 plt.figure(figsize=(10, 8))
-shap.summary_plot(shap_values, input_data_encoded, plot_type="bar", show=False, color="coolwarm")  
+shap.summary_plot(shap_values, input_data_encoded, plot_type="bar", show=False, cmap="coolwarm")  # "coolwarm" is a colormap
+
+
 st.pyplot(plt)
