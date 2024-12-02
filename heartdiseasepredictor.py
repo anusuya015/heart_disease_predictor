@@ -6,7 +6,7 @@ from sklearn.linear_model import LogisticRegression
 # Load your dataset 
 @st.cache_data
 def load_data():
-    df = pd.read_csv(r"C:/Users/Anusuya/Downloads/heart.csv")
+    df = pd.read_csv("heart.csv")
     return df
 
 # Preprocess the dataset (similar to your original code)
