@@ -86,23 +86,23 @@ if prediction == 1:
 else:
     st.write(f"**Low Risk**: The model predicts no heart disease with a probability of {(1 - prediction_prob) * 100:.2f}%.")
 
-# Feature importance with SHAP
-st.subheader("Feature Importance")
+st.subheader("Feature Importance (SHAP Values)")
+st.write("""
+This chart shows how each feature influences the model’s decision to predict the likelihood of heart disease.
+Positive values suggest higher risk, and negative values suggest lower risk. Larger bars indicate stronger impacts.
+""")
 
-# Use SHAP to explain the model
-explainer = shap.LinearExplainer(model, X)  # X is the training dataset used for model fitting
+# Generate SHAP values (assumes explainer and model are already defined)
+explainer = shap.LinearExplainer(model, X)  # X is your training data
 shap_values = explainer.shap_values(input_data_encoded)
 
-# Print the shape of shap_values to debug the issue
-st.write(f"SHAP values shape: {len(shap_values)}")  # To check if it's a list or tuple
-
-# Handle the output for binary classification
+# For binary classification, use shap_values[1] for the positive class
 if isinstance(shap_values, list):
-    shap_values = shap_values[1]  # For binary classification, use shap_values[1] for the positive class
+    shap_values = shap_values[1]
 
-# Plot the SHAP 
+# Plot the SHAP summary plot with a user-friendly explanation
 plt.figure(figsize=(10, 8))
-shap.summary_plot(shap_values, input_data_encoded, plot_type="bar", show=False, cmap="coolwarm")  # "coolwarm" is a colormap
+shap.summary_plot(shap_values, input_data_encoded, plot_type="bar", show=False)
 
-
+# Show the plot in Streamlit
 st.pyplot(plt)
