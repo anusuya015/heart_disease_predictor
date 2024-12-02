@@ -1,88 +1,86 @@
-import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+import shap
+import streamlit as st
 
-# Load your dataset 
+# Set styles for plots
+sns.set_style("whitegrid")
+plt.style.use("fivethirtyeight")
+
+# Load dataset
 @st.cache_data
-def load_data():
-    df = pd.read_csv("heart.csv")
+def load_data(uploaded_file=None):
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+    else:
+        df = pd.read_csv("heart.csv")  # Default for local development
     return df
 
-# Preprocess the dataset (similar to your original code)
-@st.cache_data
-def preprocess_data(df):
-    # One-hot encoding for categorical variables
-    categorical_val = ['cp', 'restecg', 'slope', 'ca', 'thal']
-    df = pd.get_dummies(df, columns=categorical_val)
-    
-    # Feature scaling
-    col_to_scale = ['age', 'trestbps', 'chol', 'thalach', 'oldpeak']
-    scaler = StandardScaler()
-    df[col_to_scale] = scaler.fit_transform(df[col_to_scale])
-    
-    return df, scaler
+uploaded_file = st.sidebar.file_uploader("Upload heart.csv", type=["csv"])
+df = load_data(uploaded_file)
 
-# Load and preprocess data
-df = load_data()
-processed_data, scaler = preprocess_data(df)
+# Display dataset
+if st.sidebar.checkbox("Show Data"):
+    st.write(df)
 
-# Prepare the model
-X = processed_data.drop("target", axis=1)
-y = processed_data["target"]
-model = LogisticRegression(solver='liblinear', class_weight='balanced')
-model.fit(X, y)
+# Preprocessing
+categorical_val = []
+continuous_val = []
 
-# Streamlit App
-st.title("Heart Disease Predictor")
-st.write("This application predicts the likelihood of heart disease based on medical inputs.")
+for column in df.columns:
+    if len(df[column].unique()) <= 10:
+        categorical_val.append(column)
+    else:
+        continuous_val.append(column)
 
-# Sidebar for user input
-st.sidebar.header("Enter Patient Details")
-def user_input_features():
-    age = st.sidebar.slider("Age", 20, 80, 50)
-    sex = st.sidebar.selectbox("Sex", options=["Male", "Female"])
-    cp = st.sidebar.selectbox("Chest Pain Type (0: Typical Angina, 1: Atypical, 2: Non-Anginal, 3: Asymptomatic)", [0, 1, 2, 3])
-    trestbps = st.sidebar.slider("Resting Blood Pressure (mm Hg)", 90, 200, 120)
-    chol = st.sidebar.slider("Serum Cholesterol (mg/dL)", 100, 400, 200)
-    fbs = st.sidebar.selectbox("Fasting Blood Sugar > 120 mg/dL", [0, 1])
-    restecg = st.sidebar.selectbox("Resting ECG (0: Normal, 1: Abnormal, 2: Hypertrophy)", [0, 1, 2])
-    thalach = st.sidebar.slider("Max Heart Rate Achieved", 60, 220, 150)
-    exang = st.sidebar.selectbox("Exercise-Induced Angina", [0, 1])
-    oldpeak = st.sidebar.slider("ST Depression Induced by Exercise", 0.0, 6.0, 1.0, step=0.1)
-    slope = st.sidebar.selectbox("Slope of Peak Exercise ST Segment (0: Upsloping, 1: Flat, 2: Downsloping)", [0, 1, 2])
-    ca = st.sidebar.selectbox("Number of Major Vessels (0-3)", [0, 1, 2, 3])
-    thal = st.sidebar.selectbox("Thalassemia (0: Normal, 1: Fixed Defect, 2: Reversible Defect)", [0, 1, 2, 3])
+categorical_val.remove("target")
+dataset = pd.get_dummies(df, columns=categorical_val)
+col_to_scale = ["age", "trestbps", "chol", "thalach", "oldpeak"]
 
-    # Combine inputs into a DataFrame
-    data = {
-        'age': [age], 'sex': [1 if sex == "Male" else 0], 'cp': [cp], 'trestbps': [trestbps],
-        'chol': [chol], 'fbs': [fbs], 'restecg': [restecg], 'thalach': [thalach],
-        'exang': [exang], 'oldpeak': [oldpeak], 'slope': [slope], 'ca': [ca], 'thal': [thal]
-    }
-    features = pd.DataFrame(data)
-    return features
+s_sc = StandardScaler()
+dataset[col_to_scale] = s_sc.fit_transform(dataset[col_to_scale])
 
-input_data = user_input_features()
+# Splitting the data
+X = dataset.drop("target", axis=1)
+y = dataset.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-# Preprocess user input to match model features
-input_data_encoded = pd.get_dummies(input_data, columns=['cp', 'restecg', 'slope', 'ca', 'thal'])
-input_data_encoded = input_data_encoded.reindex(columns=X.columns, fill_value=0)
-input_data_encoded.loc[:, ['age', 'trestbps', 'chol', 'thalach', 'oldpeak']] = scaler.transform(
-    input_data_encoded[['age', 'trestbps', 'chol', 'thalach', 'oldpeak']]
-)
+# Logistic Regression Model
+lr_clf = LogisticRegression(solver="liblinear", class_weight="balanced")
+lr_clf.fit(X_train, y_train)
 
-# Prediction
-prediction_prob = model.predict_proba(input_data_encoded)[:, 1][0]
-threshold = 0.4
-prediction = (prediction_prob >= threshold).astype(int)
+# Model Performance
+if st.sidebar.checkbox("Show Model Performance"):
+    train_acc = accuracy_score(y_train, lr_clf.predict(X_train)) * 100
+    test_acc = accuracy_score(y_test, lr_clf.predict(X_test)) * 100
+    st.write(f"Training Accuracy: {train_acc:.2f}%")
+    st.write(f"Testing Accuracy: {test_acc:.2f}%")
 
-# Display results
-st.subheader("Prediction Results")
-if prediction == 1:
-    st.write(f"**High Risk**: The model predicts heart disease with a probability of {prediction_prob * 100:.2f}%.")
-else:
-    st.write(f"**Low Risk**: The model predicts no heart disease with a probability of {(1 - prediction_prob) * 100:.2f}%.")
+# SHAP Visualizations
+if st.sidebar.checkbox("Show Feature Importance (SHAP)"):
+    st.subheader("Feature Importance Visualization")
+    explainer = shap.Explainer(lr_clf, X_train)
+    shap_values = explainer(X_test)
 
-# Add a feature importance chart (Optional)
-st.write("Feature importance visualization and explanations can be added here using SHAP or similar tools.")
+    # Global Feature Importance
+    st.markdown("#### Global Feature Importance")
+    st.set_option("deprecation.showPyplotGlobalUse", False)
+    shap.summary_plot(shap_values, X_test, show=False)
+    st.pyplot()
+
+    # Local Explanation
+    st.markdown("#### Local Explanation for a Single Prediction")
+    single_instance = X_test.iloc[0]
+    shap.waterfall_plot(shap.Explanation(
+        values=shap_values[0].values,
+        base_values=shap_values[0].base_values,
+        data=single_instance,
+        feature_names=X_test.columns,
+    ))
+    st.pyplot()
