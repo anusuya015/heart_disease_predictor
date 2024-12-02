@@ -88,10 +88,16 @@ else:
 
 # Feature importance with SHAP
 st.subheader("Feature Importance")
-explainer = shap.LinearExplainer(model, X)
+
+# Use SHAP to explain the model
+explainer = shap.LinearExplainer(model, X)  # X is the training dataset used for model fitting
 shap_values = explainer.shap_values(input_data_encoded)
 
-# Plot the SHAP summary plot
-plt.figure()
-shap.summary_plot(shap_values, input_data_encoded, show=False)
+# Ensure the SHAP values are correctly processed for a single sample (when predicting for one user input)
+# Since SHAP is primarily used for interpreting model behavior on the whole dataset, 
+# here we are visualizing for a single user input by using a summary plot for one sample.
+
+# Plot the SHAP summary plot for feature importance
+plt.figure(figsize=(10, 8))
+shap.summary_plot(shap_values[1], input_data_encoded, plot_type="bar", show=False)  # shap_values[1] is for the positive class
 st.pyplot(plt)
