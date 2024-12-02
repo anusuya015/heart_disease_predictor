@@ -102,5 +102,5 @@ if isinstance(shap_values, list):
 
 # Plot the SHAP summary plot for feature importance
 plt.figure(figsize=(10, 8))
-shap.summary_plot(shap_values, input_data_encoded, plot_type="bar", show=False)
+shap.summary_plot(shap_values, input_data_encoded, plot_type="bar", show=False, color="coolwarm")
 st.pyplot(plt)
