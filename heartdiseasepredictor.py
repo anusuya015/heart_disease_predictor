@@ -86,23 +86,3 @@ if prediction == 1:
 else:
     st.write(f"**Low Risk**: The model predicts no heart disease with a probability of {(1 - prediction_prob) * 100:.2f}%.")
 
-st.subheader("Feature Importance (SHAP Values)")
-st.write("""
-This chart shows how each feature influences the model’s decision to predict the likelihood of heart disease.
-Positive values suggest higher risk, and negative values suggest lower risk. Larger bars indicate stronger impacts.
-""")
-
-# Generate SHAP values (assumes explainer and model are already defined)
-explainer = shap.LinearExplainer(model, X)  # X is your training data
-shap_values = explainer.shap_values(input_data_encoded)
-
-# For binary classification, use shap_values[1] for the positive class
-if isinstance(shap_values, list):
-    shap_values = shap_values[1]
-
-# Plot the SHAP summary plot with a user-friendly explanation
-plt.figure(figsize=(10, 8))
-shap.summary_plot(shap_values, input_data_encoded, plot_type="bar", show=False)
-
-# Show the plot in Streamlit
-st.pyplot(plt)
