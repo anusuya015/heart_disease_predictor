@@ -2,8 +2,25 @@ import streamlit as st
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-import shap
-import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train the model
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred)
+
+# Display accuracy in Streamlit
+st.sidebar.subheader("Model Performance")
+st.sidebar.write(f"Accuracy: {accuracy * 100:.2f}%")
+
 
 # Load your dataset
 @st.cache_data
