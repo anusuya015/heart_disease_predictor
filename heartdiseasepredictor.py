@@ -5,27 +5,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-# Split the data
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# Train the model
-model.fit(X_train, y_train)
-
-# Make predictions on the test set
-y_pred = model.predict(X_test)
-
-# Calculate accuracy
-accuracy = accuracy_score(y_test, y_pred)
-
-# Display accuracy in Streamlit
-st.sidebar.subheader("Model Performance")
-st.sidebar.write(f"Accuracy: {accuracy * 100:.2f}%")
-
-
 # Load your dataset
 @st.cache_data
 def load_data():
-    df = pd.read_csv(r"heart.csv")
+    df = pd.read_csv("heart.csv")  # Adjust file path as needed
     return df
 
 # Preprocess the dataset
@@ -49,14 +32,26 @@ processed_data, scaler = preprocess_data(df)
 # Prepare the model
 X = processed_data.drop("target", axis=1)
 y = processed_data["target"]
+
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train the model
 model = LogisticRegression(solver='liblinear', class_weight='balanced')
-model.fit(X, y)
+model.fit(X_train, y_train)
+
+# Make predictions and calculate accuracy
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
 
 # Streamlit App
 st.title("Heart Disease Predictor")
 st.write("This application predicts the likelihood of heart disease based on medical inputs.")
 
-# Sidebar for user input
+# Sidebar: Display accuracy and user inputs
+st.sidebar.header("Model Performance")
+st.sidebar.write(f"Accuracy: {accuracy * 100:.2f}%")
+
 st.sidebar.header("Enter Patient Details")
 def user_input_features():
     age = st.sidebar.slider("Age", 20, 80, 50)
@@ -102,4 +97,3 @@ if prediction == 1:
     st.write(f"**High Risk**: The model predicts heart disease with a probability of {prediction_prob * 100:.2f}%.")
 else:
     st.write(f"**Low Risk**: The model predicts no heart disease with a probability of {(1 - prediction_prob) * 100:.2f}%.")
-
